@@ -19,7 +19,7 @@ from_int <- from_int[str_detect(from_int, ".csv")]
 
 subid <- "W2W_4179"
 context <- "puzzle"
-## Change this next line only if you will be timelocking to something other than 
+## Change this next line only if you will be timelocking to something other than the '0' time marker
 timelock <- "4"
 
 
@@ -76,8 +76,8 @@ x$object <- case_when(x$object == "movie" ~	1,
 x$symbols  <- case_when(x$symbols.child. == "symbols" ~ 1,
                         x$symbols.child. == "without symbols" ~ 2)
 
-x$frustration <-  case_when(x$frustration.child. == "positive/neutral" ~ 2,
-                            x$frustration.child. == "frustrated" ~ 1)
+x$frustration <-  case_when(x$frustration.child. == "positive/neutral(c)" ~ 2,
+                            x$frustration.child. == "frustrated(c)" ~ 1)
 
 x$qual_beh <- case_when(x$qualifying == "soothing" ~ 3, 
                         x$qualifying == "none" ~ 4,
