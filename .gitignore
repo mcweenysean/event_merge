@@ -1,2 +1,6 @@
 old versions
 .Rapp.history
+.Rhistory
+.Ruser
+.RData
+.Rproj.user

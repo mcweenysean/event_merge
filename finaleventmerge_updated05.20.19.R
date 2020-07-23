@@ -17,10 +17,10 @@ from_int <- int_all[str_detect(int_all, paste0(subids, collapse = "|"))]
 from_int <- from_int[str_detect(from_int, ".csv")]
 
 
-subid <- "W2W_4179"
-context <- "puzzle"
+subid <- "W2W_1486"
+context <- "movie"
 ## Change this next line only if you will be timelocking to something other than the '0' time marker
-timelock <- "4"
+timelock <- 4
 
 
 csv <- from_int[str_detect(from_int, paste0(subid, "_", context))]
@@ -105,6 +105,7 @@ x$c_object <- case_when(x$object.c. == "movie(c)" ~	1,
 #actually paste each number of the event code togeter
 x$ecode <- paste0(x$engagement, x$supporter, x$object, x$symbols, x$frustration, x$qual_beh, x$parent_st, x$child_st, x$p_object, x$c_object)
 x$ecode <- gsub("NA", "0", x$ecode)
+x$ecode <- as.numeric(x$ecode)
 
 #select only the essential variables
 x <- x %>%
@@ -145,7 +146,6 @@ rm(xx, xxx, x1, i, j, z, x, v)
 y <- read.table(paste0(mat_dir, paste0(subid, "_", context, "_elist.txt")))
 #one column "b_flags" read in funky - added extra var "b_flag"
 names(y) <- c("item",	 "bepoch", "ecode", "label", "onset", "diff", "dura",	"b_flags", "b_flag",  "a_flags", "enable", "bin")
-y$ecode <- as.character(y$ecode)
 
 #find 0 point from matlab
 zero_point_mat <- y %>%
@@ -162,6 +162,11 @@ z <- full_join(df, y, by = c("ecode", "time" = "onset")) %>%
 
 #make it sort by time
 z <- z[order(z$time),]
+
+#mark as NA if its a transition epoch 
+z$ecode <- ifelse(z$diff <= 1500 & z$diff > 1000 & z$item >= 6, NA, z$ecode)
+#remove said transition epochs
+z <- z[-is.na(z$ecode),]
 
 #add a bunch of variables that matlab outputs
 z$diff <- round((z$time - lag(z$time)) *1000, 2) 
