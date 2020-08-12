@@ -17,7 +17,7 @@ from_int <- int_all[str_detect(int_all, paste0(subids, collapse = "|"))]
 from_int <- from_int[str_detect(from_int, ".csv")]
 
 
-subid <- "W2W_1486"
+subid <- "W2W3_4179"
 context <- "movie"
 ## Change this next line only if you will be timelocking to something other than the '0' time marker
 timelock <- 4
@@ -36,7 +36,7 @@ if(x$Onset_Time[1] == x$Onset_Time[2]){
 varNames <- c("Onset_Time", "Offset_Time", "object_engagement", 
               "dyadic_engagement", "joint_engagement", "engagement", "other", 
               "experiment_interrupted", "parent_state", "child_state", 
-              "frustration.child.", "object.p.", "object.c.", 
+              "frustration.child.", "object.p.", "object.c.", "object.parent.", "object.child.", 
               "supporting_person", "qualifying", "object", 
               "symbols.child.", "Transcript", "X")
 
@@ -97,10 +97,14 @@ x$child_st <- case_when(x$child_state == "object engagement movie(c)" ~ 1,
                         x$child_state == "attempted joint engagment(c)" ~ 5)
 
 x$p_object <- case_when(x$object.p. == "movie(p)" ~	1,
-                        x$object.p. == "toy/object(p)" ~ 2)
+                        x$object.p. == "toy/object(p)" ~ 2,
+                        x$object.parent. == "movie(p)" ~	1,
+                        x$object.parent. == "toy/object(p)" ~ 2)
 
 x$c_object <- case_when(x$object.c. == "movie(c)" ~	1,
-                        x$object.c. == "toy/object(c)" ~ 2)
+                        x$object.c. == "toy/object(c)" ~ 2,
+                        x$object.child. == "movie(c)" ~	1,
+                        x$object.child. == "toy/object(c)" ~ 2)
 
 #actually paste each number of the event code togeter
 x$ecode <- paste0(x$engagement, x$supporter, x$object, x$symbols, x$frustration, x$qual_beh, x$parent_st, x$child_st, x$p_object, x$c_object)
@@ -163,13 +167,19 @@ z <- full_join(df, y, by = c("ecode", "time" = "onset")) %>%
 #make it sort by time
 z <- z[order(z$time),]
 
+#recreate difference variable
+z$diff <- round((z$time - lag(z$time)) *1000, 2) 
+
 #mark as NA if its a transition epoch 
 z$ecode <- ifelse(z$diff <= 1500 & z$diff > 1000 & z$item >= 6, NA, z$ecode)
 #remove said transition epochs
-z <- z[-is.na(z$ecode),]
+z <- z[!is.na(z$ecode),] 
+
+
+
+z$diff[1] <- NA
 
 #add a bunch of variables that matlab outputs
-z$diff <- round((z$time - lag(z$time)) *1000, 2) 
 z$item <- rownames(z)
 z$bepoch <- 0
 z$dura <- 0
