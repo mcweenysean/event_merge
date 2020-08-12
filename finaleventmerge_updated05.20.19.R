@@ -18,7 +18,7 @@ from_int <- from_int[str_detect(from_int, ".csv")]
 
 
 subid <- "W2W3_4179"
-context <- "book"
+context <- "movie2"
 ## Change this next line only if you will be timelocking to something other than the '0' time marker
 timelock <- 4
 
@@ -31,6 +31,13 @@ x <- read.csv(paste0(int_dir , csv))
 if(x$Onset_Time[1] == x$Onset_Time[2]){
   x <- x[-1,]
 }
+
+#create a short final event so we don't lose data at the end
+x[(nrow(x) + 1),] <- x[nrow(x),]
+x$Number[nrow(x)] <- nrow(x)
+x$Onset_Time[nrow(x)] <- x$Offset_Time[nrow(x)]
+x$Offset_Time[nrow(x)] <- x$Offset_Time[nrow(x)] + 1
+x$Duration_Time[nrow(x)] <- x$Offset_Time[nrow(x)] - x$Onset_Time[nrow(x)]
 
 #list of all possible output variables from Interact
 varNames <- c("Onset_Time", "Offset_Time", "object_engagement", 
