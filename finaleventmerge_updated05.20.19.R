@@ -18,7 +18,7 @@ from_int <- from_int[str_detect(from_int, ".csv")]
 
 
 subid <- "W2W3_4179"
-context <- "movie"
+context <- "book"
 ## Change this next line only if you will be timelocking to something other than the '0' time marker
 timelock <- 4
 
