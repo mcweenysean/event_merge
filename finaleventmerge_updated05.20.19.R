@@ -17,13 +17,16 @@ from_int <- int_all[str_detect(int_all, paste0(subids, collapse = "|"))]
 from_int <- from_int[str_detect(from_int, ".csv")]
 
 
-subid <- "W2W3_4179"
+subid <- "W2W3_2606"
 context <- "movie2"
 ## Change this next line only if you will be timelocking to something other than the '0' time marker
 timelock <- 4
 
 
 csv <- from_int[str_detect(from_int, paste0(subid, "_", context))]
+if(length(csv) >= 2){
+  stop("There are 2 files that are not named sufficiently differently. Is your context movie1 or movie? Did multiple people export this file from interact? Are the files from Matlab and Interact named correctly?")
+}
 x <- read.csv(paste0(int_dir , csv)) 
 
 #Interact should not have identical start times for events. Occassionally, the first row will have an exact match
@@ -95,13 +98,13 @@ x$parent_st <- case_when(x$parent_state == "object engagement movie(p)" ~ 1,
                          x$parent_state == "object engagement toy/object(p)" ~ 2,
                          x$parent_state == "onlooking(p)" ~ 3, 
                          x$parent_state == "unengaged(p)" ~ 4, 
-                         x$parent_state == "attempted joint engagment(p)" ~ 5)
+                         x$parent_state == "attempted joint engagement(p)" ~ 5)
 
 x$child_st <- case_when(x$child_state == "object engagement movie(c)" ~ 1,
                         x$child_state == "object engagement toy/object(c)" ~ 2,
                         x$child_state == "onlooking(c)" ~ 3, 
                         x$child_state == "unengaged(c)" ~ 4, 
-                        x$child_state == "attempted joint engagment(c)" ~ 5)
+                        x$child_state == "attempted joint engagement(c)" ~ 5)
 
 x$p_object <- case_when(x$object.p. == "movie(p)" ~	1,
                         x$object.p. == "toy/object(p)" ~ 2,
