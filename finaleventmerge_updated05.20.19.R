@@ -17,8 +17,8 @@ from_int <- int_all[str_detect(int_all, paste0(subids, collapse = "|"))]
 from_int <- from_int[str_detect(from_int, ".csv")]
 
 
-subid <- "W2W3_2606"
-context <- "movie2"
+subid <- "W2W_3233"
+context <- "movie1"
 ## Change this next line only if you will be timelocking to something other than the '0' time marker
 timelock <- 4
 
