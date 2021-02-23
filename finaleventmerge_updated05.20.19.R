@@ -17,8 +17,8 @@ from_int <- int_all[str_detect(int_all, paste0(subids, collapse = "|"))]
 from_int <- from_int[str_detect(from_int, ".csv")]
 
 
-subid <- "SOC_800"
-context <- "book"
+subid <- "W2W_2377"
+context <- "movie"
 ## Change this next line only if you will be timelocking to something other than the '0' time marker
 timelock <- 4
 
@@ -123,9 +123,11 @@ x$ecode <- paste0(x$engagement, x$supporter, x$object, x$symbols, x$frustration,
 x$ecode <- gsub("NA", "0", x$ecode)
 x$ecode <- as.numeric(x$ecode)
 
+
 #select only the essential variables
 x <- x %>%
   select(Onset_Time, Offset_Time, ecode)
+
 
 ########################
 ####epoching############ 
@@ -144,14 +146,23 @@ for(i in 1:ncol(z)){
   x1 <- z[,i]
   xx <- c(x1, xx)
 }
-xxx <- xx[!is.na(xx)]
+xxx <- xx[!is.na(xx)] #throw out NA
 xxx <- data.frame(unname(sort(xxx, decreasing = F)))
 names(xxx) <- c("time")
+
+########################################################
 
 #"Cross" original dataframe with newly created epoch times, and keep only the ones that make sense
 df <- x %>%
   crossing(xxx) %>%
-  filter(time >= Onset_Time & time <= Offset_Time)
+  filter(time > Onset_Time & time < Offset_Time)
+
+
+####sj. chaged the code / original code: filter(time >= Onset_Time & time <= Offset_Time)
+####sj. When the time was the same as Onset & Offset, it made additional line
+
+########################################################
+
 
 #clean up environment
 rm(xx, xxx, x1, i, j, z, x, v)
@@ -169,8 +180,13 @@ zero_point_mat <- y %>%
 zero_point_mat <- zero_point_mat$onset
 zero_point_int <- min(df$time)
 
+
+####
+
 #write over the time variable by adding the zero point from matlab and subtracting the earliest time from interact
 df$time <- df$time - zero_point_int + zero_point_mat
+
+
 
 #merge to put into matlab format
 z <- full_join(df, y, by = c("ecode", "time" = "onset")) %>%
@@ -182,10 +198,24 @@ z <- z[order(z$time),]
 #recreate difference variable
 z$diff <- round((z$time - lag(z$time)) *1000, 2) 
 
+
+#####sj.changed the code to additionally create ecode1
+
+
 #mark as NA if its a transition epoch 
-z$ecode <- ifelse(z$diff <= 1500 & z$diff > 1000 & z$item >= 6, NA, z$ecode)
+z$ecode1 <- ifelse(z$diff <= 1500 & z$diff > 1000 & z$item >= 6, NA, z$ecode)
+
+####sj. added the code to keep the first event if it is tagges as NA
+for (i in 1:(nrow(z)-1)){
+  if(z$time[i] == z$time[i+1]) {
+    z$ecode1[i] <- z$ecode[i]}
+}
+
+
+
+
 #remove said transition epochs
-z <- z[!is.na(z$ecode),] 
+z <- z[!is.na(z$ecode1),] 
 
 
 
@@ -219,3 +249,8 @@ non_edit_header <- str_replace(non_edit_header, "nevents...................: [0-
 fileConn <- file(paste0("/Volumes/NortonLab/SocialEEG/event_merge/MergedFiles/", subid, "_", context, "_header.txt"))
 writeLines(non_edit_header, fileConn)
 close(fileConn)
+
+
+
+
+
