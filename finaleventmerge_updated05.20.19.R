@@ -1,10 +1,26 @@
 rm(list=ls())
 library(tidyverse)
 library(stringr)
-setwd("/Volumes/NortonLab/SocialEEG/event_merge")
+if (.Platform$OS.type == "windows") {
+  setwd("Z:\\SocialEEG\\event_merge\\")
+} else {
+  setwd("/Volumes/NortonLab/SocialEEG/event_merge")
+}
 
-int_dir <- "/Volumes/NortonLab/SocialEEG/InteractFiles/"
-mat_dir <- "./MATLAB Files/"
+if (.Platform$OS.type == "windows") {
+  int_dir <- "Z:\\SocialEEG\\InteractFiles\\"
+} else {
+  int_dir <- "/Volumes/NortonLab/SocialEEG/InteractFiles/"
+}
+
+if (.Platform$OS.type == "windows") {
+  mat_dir <- "Z:\\SocialEEG\\event_merge\\MATLAB Files\\"
+} else {
+  mat_dir <- "./MATLAB Files/"
+}
+
+
+
 
 
 elists <- list.files(mat_dir)
@@ -178,7 +194,7 @@ names(y) <- c("item",	 "bepoch", "ecode", "label", "onset", "diff", "dura",	"b_f
 zero_point_mat <- y %>%
   filter(ecode == timelock)
 zero_point_mat <- zero_point_mat$onset
-zero_point_int <- min(df$time)
+zero_point_int <- min(df$Onset_Time)
 
 
 ####
@@ -203,20 +219,28 @@ z$diff <- round((z$time - lag(z$time)) *1000, 2)
 
 
 #mark as NA if its a transition epoch 
-z$ecode1 <- ifelse(z$diff <= 1500 & z$diff > 1000 & z$item >= 6, NA, z$ecode)
+z$ecode1 <- ifelse(z$diff <= 1500 & z$diff > 1000 & z$item > 50, NA, z$ecode)
 
-####sj. added the code to keep the first event if it is tagges as NA
+
+####sj. added the code to keep the first event if it is tagged as NA
+zz <- c()
+
 for (i in 1:(nrow(z)-1)){
-  if(z$time[i] == z$time[i+1]) {
-    z$ecode1[i] <- z$ecode[i]}
+  if(z$time[i] == z$time[i+1]) 
+  {z$ecode1[i] <- z$ecode[i] 
+  zz <- c(print(i), zz)}
 }
 
+zz <- data.frame(zz)
 
+####sj. if this is greater than 1, remove dataframe 'z' to stop moving forward and print error message
+if (count(zz) > 1) 
+{ {rm(z)}
+  print("You have multiple events with same timepoints")}
 
 
 #remove said transition epochs
 z <- z[!is.na(z$ecode1),] 
-
 
 
 z$diff[1] <- NA
