@@ -33,8 +33,8 @@ from_int <- int_all[str_detect(int_all, paste0(subids, collapse = "|"))]
 from_int <- from_int[str_detect(from_int, ".csv")]
 
 
-subid <- "W2W_2377"
-context <- "movie"
+subid <- "W2W_2466"
+context <- "book"
 ## Change this next line only if you will be timelocking to something other than the '0' time marker
 timelock <- 4
 
@@ -146,7 +146,7 @@ x <- x %>%
 
 
 ########################
-####epoching############ 
+####create events####### 
 ########################
 
 z <- data.frame()
@@ -168,14 +168,12 @@ names(xxx) <- c("time")
 
 ########################################################
 
-#"Cross" original dataframe with newly created epoch times, and keep only the ones that make sense
+
+#"Cross" original dataframe with newly created event times, and keep only the ones that make sense
 df <- x %>%
   crossing(xxx) %>%
   filter(time > Onset_Time & time < Offset_Time)
 
-
-####sj. chaged the code / original code: filter(time >= Onset_Time & time <= Offset_Time)
-####sj. When the time was the same as Onset & Offset, it made additional line
 
 ########################################################
 
@@ -202,10 +200,14 @@ zero_point_int <- min(df$Onset_Time)
 #write over the time variable by adding the zero point from matlab and subtracting the earliest time from interact
 df$time <- df$time - zero_point_int + zero_point_mat
 
+#make diff1 column creating time difference between events
+df$diff1 <- round((df$time - lag(df$time)) *1000, 2) 
 
+#make the same variable in y
+y$diff1 <- NA  
 
 #merge to put into matlab format
-z <- full_join(df, y, by = c("ecode", "time" = "onset")) %>%
+z <- full_join(df, y, by = c("ecode", "diff1", "time" = "onset")) %>%
   select(-Onset_Time, -Offset_Time, -b_flag)
 
 #make it sort by time
@@ -215,31 +217,19 @@ z <- z[order(z$time),]
 z$diff <- round((z$time - lag(z$time)) *1000, 2) 
 
 
-#####sj.changed the code to additionally create ecode1
+#if diff1 is NA, give the same value as diff
+z$diff1 <- ifelse(is.na(z$diff1), z$diff, z$diff1)
 
 
-#mark as NA if its a transition epoch 
-z$ecode1 <- ifelse(z$diff <= 1500 & z$diff > 1000 & z$item > 50, NA, z$ecode)
+#ecode1 is the column to mark the transition events (transition events are the first 500ms of each event except the very first event)
+#mark as NA if its a transition event 
+z$ecode1 <- ifelse(z$diff1 <= 1500 & z$diff1 > 1000 & z$item > 50, NA, z$ecode)
 
 
-####sj. added the code to keep the first event if it is tagged as NA
-zz <- c()
-
-for (i in 1:(nrow(z)-1)){
-  if(z$time[i] == z$time[i+1]) 
-  {z$ecode1[i] <- z$ecode[i] 
-  zz <- c(print(i), zz)}
-}
-
-zz <- data.frame(zz)
-
-####sj. if this is greater than 1, remove dataframe 'z' to stop moving forward and print error message
-if (count(zz) > 1) 
-{ {rm(z)}
-  print("You have multiple events with same timepoints")}
+#sanity check: ??
 
 
-#remove said transition epochs
+#remove said transition events
 z <- z[!is.na(z$ecode1),] 
 
 
@@ -266,15 +256,13 @@ write.table(z, file = paste0("/Volumes/NortonLab/SocialEEG/event_merge/MergedFil
 
 #substitute the nevents with new nevents number
 fileName <- paste0(mat_dir, subid, "_", context, "_elist.txt")
-non_edit_header <- readChar(fileName, nchars = 1140)
+non_edit_header <- readChar(fileName, nchars = 1140) ####sjc. this line makes the additional first line in W2W data. To avoid it happening, make conditions for if socialEEG, 1140 vs. if W2W, xxx.
 non_edit_header <- str_replace(non_edit_header, "nevents...................: [0-9].*", paste0("nevents...................: ",nrow(z)))
 
 #write the weird header alone. merge using bash script
 fileConn <- file(paste0("/Volumes/NortonLab/SocialEEG/event_merge/MergedFiles/", subid, "_", context, "_header.txt"))
 writeLines(non_edit_header, fileConn)
 close(fileConn)
-
-
 
 
 
